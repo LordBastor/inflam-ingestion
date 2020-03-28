@@ -7,3 +7,6 @@ __pycache__
 
 # Ignore .env file
 .env
+
+# Files generated inside the file system to ignore
+Mall_Customers.csv

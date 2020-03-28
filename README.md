@@ -13,3 +13,7 @@ The commands you can run afterwards are as follows:
 # Building the docker image
 - Build the image using `docker build -t infinite-lambda-ingestion:latest .` (or whatever naming you may be fond of)
 - Run the image by using `docker run infinite-lambda-ingestion:latest`
+
+# Getting docker-compose running
+Currently docker-compose does not serve any role but to run the image in compose (and possibly attach other images down the line)
+`docker-compose up`

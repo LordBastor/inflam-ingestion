@@ -1,0 +1,9 @@
+# Virtual env route
+env/*
+
+# PyCache
+__pycache__
+*.py[cod]
+
+# Ignore .env file
+.env

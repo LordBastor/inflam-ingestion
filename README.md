@@ -8,3 +8,8 @@ The commands you can run afterwards are as follows:
 - `python main.py download` - downloads the CSV to the local filesystem
 - `python main.py upload_s3` - uploads the CSV to the s3 bucket
 - `python main.py upload_db` - uploads the CSV from the buckets to the DB
+
+
+# Building the docker image
+- Build the image using `docker build -t infinite-lambda-ingestion:latest .` (or whatever naming you may be fond of)
+- Run the image by using `docker run infinite-lambda-ingestion:latest`

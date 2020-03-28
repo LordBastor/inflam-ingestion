@@ -3,6 +3,7 @@ import csv
 import os
 import requests
 import sys
+import time
 
 from db_connection import DatabaseCursor
 from dotenv import load_dotenv
@@ -53,6 +54,9 @@ def download_csv():
     # Make a request call to grab the csv data
     response = requests.get(csv_url)
 
+    if not response.ok:
+        print("Failed to get CSV file")
+
     # Write respose content to a file
     with open(CSV_FILE_NAME, "w") as file:
         writer = csv.writer(file)
@@ -67,6 +71,8 @@ def download_csv():
 
             writer.writerow(line.decode("utf-8").split(","))
 
+    print("CSV Ingested and saved")
+
 
 def upload_csv_to_s3():
     """
@@ -78,7 +84,15 @@ def upload_csv_to_s3():
     s3.Bucket(AWS_BUCKET)
 
     # PUT the object into the bucket
-    s3.Object(AWS_BUCKET, FILE_PATH,).put(Body=open("{}".format(CSV_FILE_NAME), "rb"))
+    response = s3.Object(AWS_BUCKET, FILE_PATH,).put(
+        Body=open("{}".format(CSV_FILE_NAME), "rb")
+    )
+
+    if response["ResponseMetadata"]["HTTPStatusCode"] != 200:
+        print("Failed to upload CSV to s3 bucket")
+        return
+
+    print("File uploaded to S3 successfully")
 
 
 def upload_to_db():
@@ -121,7 +135,9 @@ def upload_to_db():
 if __name__ == "__main__":
     command = None
 
-    if len(sys.argv) >= 2:
+    sys_argv_len = len(sys.argv)
+
+    if sys_argv_len >= 2:
         command = sys.argv[1]
 
     if command == "download":
@@ -131,4 +147,15 @@ if __name__ == "__main__":
         upload_csv_to_s3()
 
     if command == "upload_db":
+        upload_to_db()
+
+    # Run all processes if there are no parameters provided
+    if sys_argv_len == 1:
+        download_csv()
+        upload_csv_to_s3()
+
+        # Dumb hack because s3 file is still not
+        # available by the time we get to uploading
+        time.sleep(1)
+
         upload_to_db()

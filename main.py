@@ -7,6 +7,8 @@ import sys
 from db_connection import DatabaseCursor
 from dotenv import load_dotenv
 
+from psycopg2.extensions import AsIs
+
 
 # Sets up environment variables from .env file
 load_dotenv()
@@ -17,6 +19,7 @@ AWS_KEY = os.getenv("AWS_KEY")
 AWS_SECRET = os.getenv("AWS_SECRET")
 
 CSV_FILE_NAME = "Mall_Customers.csv"
+TABLE_NAME = "mall_customers"
 CANDIDATE_ID = os.getenv("CANDIDATE_ID")
 FILE_PATH = "{}/{}".format(CANDIDATE_ID, CSV_FILE_NAME)
 
@@ -83,28 +86,35 @@ def upload_to_db():
     Uploads the ingested CSV to a database
     """
 
+    # Table name to be used when we do not
+    # wish it to be stringified as a parameter
+    as_is_table_name = AsIs(TABLE_NAME)
+
     with DatabaseCursor() as cursor:
         # Setup the database table or make sure it's already there
         cursor.execute(
             """
-                CREATE TABLE IF NOT EXISTS mall_customers(
+                CREATE TABLE IF NOT EXISTS %s(
                     customer_id INT PRIMARY KEY NOT NULL,
                     gender char(6),
                     age smallint,
                     annual_income smallint,
                     spending_score smallint
                 );
-            """
+            """,
+            [as_is_table_name],
         )
+        cursor.connection.commit()
 
+        # Truncate all existing db data and reset ids
+        cursor.execute("TRUNCATE TABLE %s RESTART IDENTITY;", [as_is_table_name])
         cursor.connection.commit()
 
         # Setup the ingestion from s3 to out rds postgres
         cursor.execute(
             "SELECT aws_s3.table_import_from_s3(%s, '', '(format csv)', %s, %s, %s)",
-            ("bg200320.mall_customers", AWS_BUCKET, FILE_PATH, AWS_REGION),
+            [TABLE_NAME, AWS_BUCKET, FILE_PATH, AWS_REGION],
         )
-
         cursor.connection.commit()
 
 
